@@ -31,7 +31,7 @@ function main() {
     document.onkeydown = handleArrowKeys;
 
 
-    setInterval(gameLoop, 1000)
+    setInterval(gameLoop, 400)
 }
 
 function createDivWithClass(className) {
@@ -57,18 +57,50 @@ function initializeGameScreen() {
     });
 }
 
-function moveActiveLeft() {
+function moveActive(horizontalStep) {
+    let canMove = true;
+    console.log('moveSideWays', activeBlock)
+    for (let i = activeBlock.coords.length - 1; i >= 0; i--) {
 
+        const coord = activeBlock.coords[i];
+        const newX = coord.x + horizontalStep;
+
+        if (coord.y >= 0) {
+            const row = gameScreen[coord.y];
+            const block = row[newX];
+            if (block.filled === 1) {
+                canMove = false;
+                break;
+            }
+        }
+
+    }
+    if (canMove && activeBlock.type !== -1) {
+        console.log('cam move sideways', activeBlock)
+        for (let i = activeBlock.coords.length - 1; i >= 0; i--) {
+            const coord = activeBlock.coords[i];
+            if (coord.y >= 0) {
+                gameScreen[coord.y][coord.x].filled = 0;
+                coord.x += horizontalStep;
+                gameScreen[coord.y][coord.x].filled = 1;
+            } else {
+                coord.x += horizontalStep;
+            }
+
+
+        }
+    }
 }
 
 function handleArrowKeys(e) {
     switch (e.key) {
         case "ArrowLeft":
-            moveActiveLeft();
+            moveActive(-1);
             renderScreen();
             break;
         case "ArrowRight":
-            // Right pressed
+            moveActive(1);
+            renderScreen();
             break;
         case "ArrowUp":
             // Up pressed
@@ -101,7 +133,6 @@ function resetActiveBlock() {
 
 function handleVerticalMovement() {
     for (let i = activeBlock.coords.length - 1; i >= 0; i--) {
-        console.log('blockloop', {block: i}, activeBlock)
         const coord = activeBlock.coords[i];
         const newY = coord.y + 1;
 
@@ -154,7 +185,6 @@ function renderScreen() {
 
 function gameLoop() {
     if (!pause) {
-        console.log('gameloop')
         if (stagingType === 0) {
             //TODO: Fetch logic for new type
             stagingType = 1;
