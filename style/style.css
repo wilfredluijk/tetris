@@ -1,0 +1,34 @@
+.score-view {
+    height: 200px;
+}
+
+.game-view {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.tetris-view {
+    display: flex;
+    flex-direction: column;
+    align-content: start;
+    width: 600px;
+    min-width: 600px;
+    max-width: 600px;
+}
+
+.tetris-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
+.filled {
+    background: blue;
+}
+
+.tetris-block {
+    height: 40px;
+    width: 40px;
+    border: solid 3px black;
+    z-index: 1;
+}
