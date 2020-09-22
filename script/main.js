@@ -24,17 +24,48 @@ function main() {
     setInterval(gameLoop, 1000)
 }
 
-function createDivWithClass(className) {
-    const rowDiv = document.createElement('div');
-    rowDiv.className = className;
-    return rowDiv;
+function gameLoop() {
+    if (!pause) {
+        if (stagingType === 0) {
+            stagingType = Math.floor(Math.random() * 7) + 1;
+        }
+
+        if (activeBlock.type === -1) {
+            initiateNewGameBlock();
+            stagingType = 0;
+        }
+
+        handleVerticalMovement();
+        renderScreen();
+        gameTick++;
+    }
+}
+
+function handleArrowKeys(e) {
+    switch (e.key) {
+        case "ArrowLeft":
+            moveActive(-1);
+            renderScreen();
+            break;
+        case "ArrowRight":
+            moveActive(1);
+            renderScreen();
+            break;
+        case "ArrowUp":
+            rotate();
+            renderScreen();
+            break;
+        case "ArrowDown":
+            handleVerticalMovement();
+            renderScreen();
+            break;
+    }
+
 }
 
 function initializeGameScreen() {
     const gameScreenDiv = document.querySelector('.tetris-view');
-    console.log('loop')
     Array.from(Array(20).keys()).forEach((val, index) => {
-        console.log('loop')
         const rowDiv = createDivWithClass('tetris-row');
         const blocks = [];
         Array.from(Array(10).keys()).forEach((block, index) => {
@@ -45,6 +76,12 @@ function initializeGameScreen() {
         gameScreenDiv.appendChild(rowDiv);
         gameScreen.push(blocks);
     });
+}
+
+function createDivWithClass(className) {
+    const rowDiv = document.createElement('div');
+    rowDiv.className = className;
+    return rowDiv;
 }
 
 function moveActive(horizontalStep) {
@@ -93,25 +130,67 @@ function moveActive(horizontalStep) {
     }
 }
 
-function handleArrowKeys(e) {
-    switch (e.key) {
-        case "ArrowLeft":
-            moveActive(-1);
-            renderScreen();
-            break;
-        case "ArrowRight":
-            moveActive(1);
-            renderScreen();
-            break;
-        case "ArrowUp":
-            // Up pressed
-            break;
-        case "ArrowDown":
-            handleVerticalMovement();
-            renderScreen();
-            break;
+function blockIsCompared(booleanCallback) {
+    return activeBlock.coords.some(row => row.some(block => booleanCallback(block)));
+}
+
+function rotate() {
+    const length = activeBlock.coords.length;
+    const map = activeBlock.coords.map(row => row.length);
+    const max = Math.max(...map, length);
+    const minX = Math.min(...activeBlock.coords.flatMap(row => row.map(block => block.x)));
+    let canTurn = true;
+
+    activeBlock.coords.forEach(row => row.forEach(block => {
+        if (canTurn) {
+            const xOld = block.x;
+            const yOld = block.y;
+
+            const maxPos = minX + (max - 1);
+            if (minX >= 0 && maxPos <= 9) {
+                // noinspection JSSuspiciousNameCombination
+                const yNew = xOld;
+                const xNew = minX + (maxPos - yOld);
+                console.log({maxPos: maxPos, minPos: minX});
+                const blockElement = gameScreen[yNew][xNew];
+                if (blockIsCompared(block => block.x === xNew && block.y === yNew)) {
+                    // other block of own figure;
+                } else {
+                    console.log(`yOld: ${yOld}, xOld: ${xOld} | yNew: ${yNew}, xNew: ${xNew}`)
+                    canTurn = blockElement.filled !== 1
+                }
+            } else {
+                canTurn = false;
+            }
+        }
+
+    }))
+
+    if (canTurn) {
+        activeBlock.coords.forEach(row => row.forEach(block => {
+            const xOld = block.x;
+            const yOld = block.y;
+
+            const maxPos = minX + (max - 1);
+
+            // noinspection JSSuspiciousNameCombination
+            const yNew = xOld;
+            const xNew = minX + (maxPos - yOld);
+
+            if (yOld >= 0) {
+                gameScreen[yOld][yNew].filled = 0;
+            }
+            if (yNew >= 0) {
+                gameScreen[yNew][xNew].filled = 1;
+            }
+            block.x = xNew;
+            block.y = yNew;
+        }));
     }
 
+    // length or width max of figure array determines the grid;
+    // y new = x old
+    // x new = min + (max - y old)
 }
 
 function initiateNewGameBlock() {
@@ -176,7 +255,6 @@ function handleVerticalMovement() {
 function renderScreen() {
     gameScreen.forEach(row => {
         row.forEach(block => {
-            // console.log(block)
             if (block.filled === 1) {
                 block.div.className = 'tetris-block filled'
             } else {
@@ -184,26 +262,6 @@ function renderScreen() {
             }
         })
     })
-}
-
-function gameLoop() {
-    if (!pause) {
-        if (stagingType === 0) {
-            stagingType = Math.floor(Math.random() * 7) + 1;
-        }
-
-        if (activeBlock.type === -1) {
-            initiateNewGameBlock();
-            stagingType = 0;
-        }
-
-        handleVerticalMovement();
-
-
-        renderScreen();
-
-        gameTick++;
-    }
 }
 
 function getStartCoordsForType(stagingType) {
