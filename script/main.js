@@ -27,7 +27,8 @@ function main() {
 function gameLoop() {
     if (!pause) {
         if (stagingType === 0) {
-            stagingType = Math.floor(Math.random() * 7) + 1;
+            // stagingType = Math.floor(Math.random() * 7) + 1;
+            stagingType = 4;
         }
 
         if (activeBlock.type === -1) {
@@ -35,7 +36,7 @@ function gameLoop() {
             stagingType = 0;
         }
 
-        handleVerticalMovement();
+        moveDown();
         renderScreen();
         gameTick++;
     }
@@ -44,11 +45,11 @@ function gameLoop() {
 function handleArrowKeys(e) {
     switch (e.key) {
         case "ArrowLeft":
-            moveActive(-1);
+            moveSideways(-1);
             renderScreen();
             break;
         case "ArrowRight":
-            moveActive(1);
+            moveSideways(1);
             renderScreen();
             break;
         case "ArrowUp":
@@ -56,7 +57,7 @@ function handleArrowKeys(e) {
             renderScreen();
             break;
         case "ArrowDown":
-            handleVerticalMovement();
+            moveDown();
             renderScreen();
             break;
     }
@@ -84,7 +85,7 @@ function createDivWithClass(className) {
     return rowDiv;
 }
 
-function moveActive(horizontalStep) {
+function moveSideways(horizontalStep) {
     let canMove = true;
     console.log('moveSideWays', activeBlock)
     for (let i = activeBlock.coords.length - 1; i >= 0; i--) {
@@ -153,9 +154,7 @@ function rotate() {
                 const xNew = minX + (maxPos - yOld);
                 console.log({maxPos: maxPos, minPos: minX});
                 const blockElement = gameScreen[yNew][xNew];
-                if (blockIsCompared(block => block.x === xNew && block.y === yNew)) {
-                    // other block of own figure;
-                } else {
+                if (!blockIsCompared(block => block.x === xNew && block.y === yNew)) {
                     console.log(`yOld: ${yOld}, xOld: ${xOld} | yNew: ${yNew}, xNew: ${xNew}`)
                     canTurn = blockElement.filled !== 1
                 }
@@ -183,14 +182,11 @@ function rotate() {
             if (yNew >= 0) {
                 gameScreen[yNew][xNew].filled = 1;
             }
+            console.log({xNew: xNew, xOld: xOld})
             block.x = xNew;
             block.y = yNew;
         }));
     }
-
-    // length or width max of figure array determines the grid;
-    // y new = x old
-    // x new = min + (max - y old)
 }
 
 function initiateNewGameBlock() {
@@ -203,7 +199,7 @@ function resetActiveBlock() {
     activeBlock.type = -1;
 }
 
-function handleVerticalMovement() {
+function moveDown() {
     let invalidMove = false;
     const figureRowCount = activeBlock.coords.length - 1;
     for (let i = figureRowCount; i >= 0; i--) {
@@ -215,14 +211,20 @@ function handleVerticalMovement() {
                 invalidMove = newY >= gameScreen.length;
 
                 if (!invalidMove) {
+                    const isSelf = blockIsCompared(block => block.x === position.x
+                        && block.y === newY);
                     if (i === figureRowCount) {
-                        invalidMove = gameScreen[newY][position.x].filled === 1;
+                        if (!isSelf) {
+                            invalidMove = gameScreen[newY][position.x].filled === 1;
+                        }
                     } else {
                         const blockBelow = activeBlock.coords[i + 1]
                             .some(blockCoordinates => blockCoordinates.x === position.x
                                 && blockCoordinates.y === newY);
                         if (!blockBelow) {
-                            invalidMove = gameScreen[newY][position.x].filled === 1;
+                            if (!isSelf) {
+                                invalidMove = gameScreen[newY][position.x].filled === 1;
+                            }
                         }
                     }
                 }
@@ -240,7 +242,13 @@ function handleVerticalMovement() {
             figureRow.forEach((position, index) => {
                 const newY = position.y + 1;
 
-                if (position.y >= 0) {
+                let count = 0;
+                activeBlock.coords.some(row => row.some(block => {
+                    if(block.x === position.x && block.y === position.y)
+                        count++;
+                }));
+
+                if (position.y >= 0 && count <= 1) {
                     gameScreen[position.y][position.x].filled = 0
                 }
                 if (newY >= 0) {
