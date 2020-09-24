@@ -1,3 +1,7 @@
+body {
+    background-color: #151a30;
+    font-family: 'B612', sans-serif;
+}
 .score-view {
     height: 200px;
     display: flex;
@@ -7,20 +11,27 @@
 }
 
 .score-box, .level-box {
-    border: 2px solid black;
+    border: 2px solid #dfd9e8;
     padding: 10px;
     margin-right: 2rem;
+    color: #dfd9e8;
+    border-radius: 25px;
 }
 
 #pause, #restart {
     margin: 1rem;
     font-size: 30px;
+    background-color: #384268;
+    color: #dfd9e8;
+    padding: 20px;
+    border-radius: 25px;
 }
 
 .game-view, .action-bar {
     display: flex;
     flex-direction: row;
     justify-content: center;
+
 }
 
 .tetris-view {
@@ -37,14 +48,47 @@
     flex-direction: row;
     flex-wrap: nowrap;
 }
-.filled {
-    background: blue;
+
+.filled-0 {
+    background: #384268;
+}
+
+.filled-1 {
+    background: #48f957;
+}
+
+.filled-2 {
+    background: #ff1203;
+}
+
+.filled-3 {
+    background: #fda703;
+}
+
+.filled-4 {
+    background: #ef7afa;
+}
+
+.filled-5 {
+    background: #fbfcfc;
+}
+
+.filled-6 {
+    background: #04bcff;
+}
+
+.filled-7 {
+    background: #ff006e;
+}
+
+.filled-8 {
+    background: #f86b0a;
 }
 
 .tetris-block {
     height: 35px;
     width: 35px;
-    border: solid 3px black;
+    border: solid 2px #dfd9e8;
     z-index: 1;
 }
 

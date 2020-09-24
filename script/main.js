@@ -105,7 +105,7 @@ function scoreForCompleteRows() {
 
     let scoreCount = 0;
     gameScreen.forEach((row, index) => {
-        const complete = row.every(el => el.filled === 1);
+        const complete = row.every(el => el.filled > 0);
         if (complete) {
             scoreCount++;
             const {rowDiv, blocks} = getNewRow();
@@ -141,11 +141,7 @@ function scoreForCompleteRows() {
 function renderScreen() {
     gameScreen.forEach(row => {
         row.forEach(block => {
-            if (block.filled === 1) {
-                block.div.className = 'tetris-block filled'
-            } else {
-                block.div.className = 'tetris-block'
-            }
+            block.div.className = 'tetris-block filled-'+ block.filled
         })
     })
 }
@@ -192,7 +188,7 @@ function moveSideways(horizontalStep) {
 
             const isOwn = blockIsCompared(block => block.x === newX && block.y === block.y);
 
-            if (blockElement.filled === 1 && !isOwn) {
+            if (blockElement.filled > 0 && !isOwn) {
                 canMove = false;
                 break;
             }
@@ -213,7 +209,7 @@ function moveSideways(horizontalStep) {
                         gameScreen[block.y][block.x].filled = 0;
                     }
                     block.x += horizontalStep;
-                    gameScreen[block.y][block.x].filled = 1;
+                    gameScreen[block.y][block.x].filled = activeBlock.type;
                 } else {
                     block.x += horizontalStep;
                 }
@@ -264,7 +260,7 @@ function rotate() {
                 gameScreen[yOld][xOld].filled = 0;
             }
             if (yNew >= 0) {
-                gameScreen[yNew][xNew].filled = 1;
+                gameScreen[yNew][xNew].filled = activeBlock.type;
             }
             block.x = xNew;
             block.y = yNew;
@@ -320,7 +316,7 @@ function loseGame() {
     gameScreen.slice().reverse().forEach((row, index) => {
 
         setTimeout(() => {
-            row.forEach(block => block.filled = 1);
+            row.forEach(block => block.filled = 8);
             renderScreen();
             if (index === gameScreen.length - 1) {
                 resetGame();
@@ -346,7 +342,7 @@ function moveDown() {
                         && block.y === newY);
                     if (i === figureRowCount) {
                         if (!isSelf) {
-                            invalidMove = gameScreen[newY][position.x].filled === 1;
+                            invalidMove = gameScreen[newY][position.x].filled > 0;
                         }
                     } else {
                         const blockBelow = activeBlock.coords[i + 1]
@@ -354,7 +350,7 @@ function moveDown() {
                                 && blockCoordinates.y === newY);
                         if (!blockBelow) {
                             if (!isSelf) {
-                                invalidMove = gameScreen[newY][position.x].filled === 1;
+                                invalidMove = gameScreen[newY][position.x].filled > 0;
                             }
                         }
                     }
@@ -376,7 +372,7 @@ function moveDown() {
                     gameScreen[position.y][position.x].filled = 0
                 }
                 if (newY >= 0) {
-                    gameScreen[newY][position.x].filled = 1;
+                    gameScreen[newY][position.x].filled = activeBlock.type;
                 }
                 position.y = newY;
             });
