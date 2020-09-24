@@ -1,5 +1,7 @@
 let gameTick = 0;
 let stagingType = 0;
+let score = 0;
+let lines = 0;
 let activeBlock = {
     type: -1,
     coords: [[{x: 0, y: 0}]], orientation: 1
@@ -27,11 +29,13 @@ function main() {
 function gameLoop() {
     if (!pause) {
         if (stagingType === 0) {
-            // stagingType = Math.floor(Math.random() * 7) + 1;
-            stagingType = 4;
+            stagingType = Math.floor(Math.random() * 7) + 1;
+            // stagingType = 7;
+            console.log(stagingType);
         }
 
         if (activeBlock.type === -1) {
+            scoreForCompleteRows();
             initiateNewGameBlock();
             stagingType = 0;
         }
@@ -64,19 +68,86 @@ function handleArrowKeys(e) {
 
 }
 
+function getLevel() {
+    let level = 1;
+    if (lines > 10) {
+        level = Math.round(lines / 10);
+    }
+    return level;
+}
+
+function scoreForCompleteRows() {
+    const gameScreenDiv = document.querySelector('.tetris-view');
+
+    let scoreCount = 0;
+    gameScreen.forEach((row, index) => {
+        const complete = row.every(el => el.filled === 1);
+        if (complete) {
+            scoreCount++;
+            const {rowDiv, blocks} = getNewRow();
+            const parent = row[0].div.parentNode;
+            parent.parentNode.removeChild(row[0].div.parentElement);
+            gameScreen.splice(index, 1);
+            gameScreen.splice(0, 0, blocks);
+            gameScreenDiv.insertBefore(rowDiv, gameScreenDiv.children[0]);
+        }
+    });
+
+    if (scoreCount > 0) {
+        const level = getLevel()
+        switch (scoreCount) {
+            case 1:
+                score += (level * 100);
+                break;
+            case 2:
+                score += (level * 200);
+                break
+            case 3:
+                score += (level * 500);
+                break;
+            case 4:
+                score += (level * 800);
+                break;
+        }
+        lines += scoreCount
+
+        const scoreElement = document.querySelector('#score-field');
+        scoreElement.innerHTML = String(score);
+        const linesElement = document.querySelector('#lines-field');
+        linesElement.innerHTML = String(lines);
+    }
+}
+
+function renderScreen() {
+    gameScreen.forEach(row => {
+        row.forEach(block => {
+            if (block.filled === 1) {
+                block.div.className = 'tetris-block filled'
+            } else {
+                block.div.className = 'tetris-block'
+            }
+        })
+    })
+}
+
 function initializeGameScreen() {
     const gameScreenDiv = document.querySelector('.tetris-view');
     Array.from(Array(20).keys()).forEach((val, index) => {
-        const rowDiv = createDivWithClass('tetris-row');
-        const blocks = [];
-        Array.from(Array(10).keys()).forEach((block, index) => {
-            const blockDiv = createDivWithClass('tetris-block');
-            rowDiv.appendChild(blockDiv);
-            blocks.push({filled: 0, div: blockDiv});
-        });
+        const {rowDiv, blocks} = getNewRow();
         gameScreenDiv.appendChild(rowDiv);
         gameScreen.push(blocks);
     });
+}
+
+function getNewRow() {
+    const rowDiv = createDivWithClass('tetris-row');
+    const blocks = [];
+    Array.from(Array(10).keys()).forEach((block, index) => {
+        const blockDiv = createDivWithClass('tetris-block');
+        rowDiv.appendChild(blockDiv);
+        blocks.push({filled: 0, div: blockDiv});
+    });
+    return {rowDiv, blocks};
 }
 
 function createDivWithClass(className) {
@@ -87,21 +158,21 @@ function createDivWithClass(className) {
 
 function moveSideways(horizontalStep) {
     let canMove = true;
-    console.log('moveSideWays', activeBlock)
     for (let i = activeBlock.coords.length - 1; i >= 0; i--) {
         const row = activeBlock.coords[i];
         let block = horizontalStep === 1 ? row[row.length - 1] : row[0];
         const newX = block.x + horizontalStep;
-        console.log('new x', newX);
         if (newX > 9 || newX < 0) {
             canMove = false;
             break;
         }
         if (block.y >= 0) {
-            console.log(block)
             const row = gameScreen[block.y];
             const blockElement = row[newX];
-            if (blockElement.filled === 1) {
+
+            const isOwn = blockIsCompared(block => block.x === newX && block.y === block.y);
+
+            if (blockElement.filled === 1 && !isOwn) {
                 canMove = false;
                 break;
             }
@@ -109,7 +180,6 @@ function moveSideways(horizontalStep) {
     }
 
     if (canMove && activeBlock.type !== -1) {
-        console.log('cam move sideways', activeBlock)
         for (let i = activeBlock.coords.length - 1; i >= 0; i--) {
             const slice = activeBlock.coords[i].slice();
 
@@ -119,10 +189,11 @@ function moveSideways(horizontalStep) {
 
             slice.forEach(block => {
                 if (block.y >= 0) {
-                    gameScreen[block.y][block.x].filled = 0;
+                    if (blocksOnPos(block) <= 1) {
+                        gameScreen[block.y][block.x].filled = 0;
+                    }
                     block.x += horizontalStep;
                     gameScreen[block.y][block.x].filled = 1;
-                    console.log(block.y, block.x);
                 } else {
                     block.x += horizontalStep;
                 }
@@ -136,26 +207,22 @@ function blockIsCompared(booleanCallback) {
 }
 
 function rotate() {
-    const length = activeBlock.coords.length;
-    const map = activeBlock.coords.map(row => row.length);
-    const max = Math.max(...map, length);
+    const maxY = Math.max(...activeBlock.coords.flatMap(row => row.map(block => block.y)));
+    const minY = Math.min(...activeBlock.coords.flatMap(row => row.map(block => block.y)));
     const minX = Math.min(...activeBlock.coords.flatMap(row => row.map(block => block.x)));
     let canTurn = true;
+
 
     activeBlock.coords.forEach(row => row.forEach(block => {
         if (canTurn) {
             const xOld = block.x;
             const yOld = block.y;
-
-            const maxPos = minX + (max - 1);
-            if (minX >= 0 && maxPos <= 9) {
+            const yNew = xOld + (maxY - minX);
+            const xNew = minX + (maxY - yOld);
+            if (minX >= 0 && yNew < gameScreen.length && xNew <= 9) {
                 // noinspection JSSuspiciousNameCombination
-                const yNew = xOld;
-                const xNew = minX + (maxPos - yOld);
-                console.log({maxPos: maxPos, minPos: minX});
                 const blockElement = gameScreen[yNew][xNew];
                 if (!blockIsCompared(block => block.x === xNew && block.y === yNew)) {
-                    console.log(`yOld: ${yOld}, xOld: ${xOld} | yNew: ${yNew}, xNew: ${xNew}`)
                     canTurn = blockElement.filled !== 1
                 }
             } else {
@@ -170,19 +237,15 @@ function rotate() {
             const xOld = block.x;
             const yOld = block.y;
 
-            const maxPos = minX + (max - 1);
+            const yNew = xOld + (maxY - minX);
+            const xNew = minX + (maxY - yOld);
 
-            // noinspection JSSuspiciousNameCombination
-            const yNew = xOld;
-            const xNew = minX + (maxPos - yOld);
-
-            if (yOld >= 0) {
-                gameScreen[yOld][yNew].filled = 0;
+            if (yOld >= 0 && blocksOnPos(block) <= 1) {
+                gameScreen[yOld][xOld].filled = 0;
             }
             if (yNew >= 0) {
                 gameScreen[yNew][xNew].filled = 1;
             }
-            console.log({xNew: xNew, xOld: xOld})
             block.x = xNew;
             block.y = yNew;
         }));
@@ -197,6 +260,15 @@ function initiateNewGameBlock() {
 
 function resetActiveBlock() {
     activeBlock.type = -1;
+}
+
+function blocksOnPos(position) {
+    let count = 0;
+    activeBlock.coords.some(row => row.some(block => {
+        if (block.x === position.x && block.y === position.y)
+            count++;
+    }));
+    return count;
 }
 
 function moveDown() {
@@ -229,7 +301,6 @@ function moveDown() {
                     }
                 }
                 if (invalidMove) {
-                    console.log('Hitting end of board, or other block');
                     resetActiveBlock();
                 }
             }
@@ -242,13 +313,7 @@ function moveDown() {
             figureRow.forEach((position, index) => {
                 const newY = position.y + 1;
 
-                let count = 0;
-                activeBlock.coords.some(row => row.some(block => {
-                    if(block.x === position.x && block.y === position.y)
-                        count++;
-                }));
-
-                if (position.y >= 0 && count <= 1) {
+                if (position.y >= 0 && blocksOnPos(position) <= 1) {
                     gameScreen[position.y][position.x].filled = 0
                 }
                 if (newY >= 0) {
@@ -258,18 +323,6 @@ function moveDown() {
             });
         }
     }
-}
-
-function renderScreen() {
-    gameScreen.forEach(row => {
-        row.forEach(block => {
-            if (block.filled === 1) {
-                block.div.className = 'tetris-block filled'
-            } else {
-                block.div.className = 'tetris-block'
-            }
-        })
-    })
 }
 
 function getStartCoordsForType(stagingType) {
@@ -313,9 +366,8 @@ function getStartCoordsForType(stagingType) {
             // #
             // ##
             // #
-            returnValue = [[{x: 5, y: -3}], [{x: 5, y: -2}, {x: 6, y: -2}], [{x: 6, y: -1}]];
+            returnValue = [[{x: 5, y: -3}], [{x: 5, y: -2}, {x: 6, y: -2}], [{x: 5, y: -1}]];
             break;
     }
-    console.log('new type', stagingType);
     return returnValue;
 }
