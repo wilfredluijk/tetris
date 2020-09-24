@@ -2,6 +2,7 @@ let gameTick = 0;
 let stagingType = 0;
 let score = 0;
 let lines = 0;
+let level = 1;
 let activeBlock = {
     type: -1,
     coords: [[{x: 0, y: 0}]], orientation: 1
@@ -18,7 +19,9 @@ function main() {
     window.onload = () => {
         initializeGameScreen();
         document.querySelector("#pause")
-            .addEventListener("click", () => pause = !pause);
+            .addEventListener("click", pauseGame());
+        document.querySelector("#restart")
+            .addEventListener("click", () => loseGame());
     }
     document.onkeydown = handleArrowKeys;
 
@@ -47,25 +50,39 @@ function gameLoop() {
 }
 
 function handleArrowKeys(e) {
-    switch (e.key) {
-        case "ArrowLeft":
-            moveSideways(-1);
-            renderScreen();
-            break;
-        case "ArrowRight":
-            moveSideways(1);
-            renderScreen();
-            break;
-        case "ArrowUp":
-            rotate();
-            renderScreen();
-            break;
-        case "ArrowDown":
-            moveDown();
-            renderScreen();
-            break;
+    if (!pause) {
+        switch (e.key) {
+            case "ArrowLeft":
+                moveSideways(-1);
+                renderScreen();
+                break;
+            case "ArrowRight":
+                moveSideways(1);
+                renderScreen();
+                break;
+            case "ArrowUp":
+                rotate();
+                renderScreen();
+                break;
+            case "ArrowDown":
+                moveDown();
+                renderScreen();
+                break;
+        }
     }
+}
 
+
+function pauseGame() {
+    return () => {
+        pause = !pause;
+        const element = document.querySelector('#pause');
+        let text = 'pause';
+        if (pause) {
+            text = 'resume'
+        }
+        element.innerHTML = text;
+    }
 }
 
 function getLevel() {
@@ -74,6 +91,13 @@ function getLevel() {
         level = Math.round(lines / 10);
     }
     return level;
+}
+
+function setScoreAndLevel() {
+    const scoreElement = document.querySelector('#score-field');
+    scoreElement.innerHTML = String(score);
+    const linesElement = document.querySelector('#level-field');
+    linesElement.innerHTML = String(level);
 }
 
 function scoreForCompleteRows() {
@@ -94,7 +118,7 @@ function scoreForCompleteRows() {
     });
 
     if (scoreCount > 0) {
-        const level = getLevel()
+        level = getLevel()
         switch (scoreCount) {
             case 1:
                 score += (level * 100);
@@ -110,11 +134,7 @@ function scoreForCompleteRows() {
                 break;
         }
         lines += scoreCount
-
-        const scoreElement = document.querySelector('#score-field');
-        scoreElement.innerHTML = String(score);
-        const linesElement = document.querySelector('#lines-field');
-        linesElement.innerHTML = String(lines);
+        setScoreAndLevel();
     }
 }
 
@@ -271,6 +291,45 @@ function blocksOnPos(position) {
     return count;
 }
 
+function restartGame() {
+    resetActiveBlock();
+    score = 0;
+    level = 1;
+    lines = 0;
+    setScoreAndLevel();
+    pause = false;
+}
+
+function resetGame() {
+    gameScreen.slice().forEach((row, index) => {
+
+        setTimeout(() => {
+            if (index === gameScreen.length - 1) {
+                restartGame();
+            }
+            row.forEach(block => block.filled = 0);
+            renderScreen();
+        }, index * 100);
+    })
+}
+
+function loseGame() {
+    //Handle lose game logic
+    console.log('game is lost!');
+    pause = true;
+    gameScreen.slice().reverse().forEach((row, index) => {
+
+        setTimeout(() => {
+            row.forEach(block => block.filled = 1);
+            renderScreen();
+            if (index === gameScreen.length - 1) {
+                resetGame();
+            }
+        }, index * 100);
+        console.log()
+    })
+}
+
 function moveDown() {
     let invalidMove = false;
     const figureRowCount = activeBlock.coords.length - 1;
@@ -322,6 +381,12 @@ function moveDown() {
                 position.y = newY;
             });
         }
+    } else {
+        const lost = activeBlock.coords.flatMap(row => row.map(block => block.y)).every(yCoord => yCoord < 0);
+        if (lost) {
+            loseGame();
+        }
+
     }
 }
 

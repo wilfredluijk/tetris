@@ -6,13 +6,13 @@
     flex-direction: row;
 }
 
-.score-box, .lines-box {
+.score-box, .level-box {
     border: 2px solid black;
     padding: 10px;
     margin-right: 2rem;
 }
 
-#pause {
+#pause, #restart {
     margin: 1rem;
     font-size: 30px;
 }
@@ -42,8 +42,8 @@
 }
 
 .tetris-block {
-    height: 40px;
-    width: 40px;
+    height: 35px;
+    width: 35px;
     border: solid 3px black;
     z-index: 1;
 }
