@@ -2,7 +2,7 @@
 Tetris in pure vanilla html, javascript and css. 
 No added libraries. 
 
-Play the [demo] (https://wilfredluijk.github.io/tetris/)
+Play the [demo](https://wilfredluijk.github.io/tetris/)
 
 # Controls
 Play using the arrowkeys.   
