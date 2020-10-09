@@ -1,3 +1,4 @@
+//Globals
 let stagingType = 0;
 let score = 0;
 let lines = 0;
@@ -6,23 +7,22 @@ let activeBlock = {
     type: -1,
     coords: [[{x: 0, y: 0}]]
 };
+let pause = false;
 let timeout = 1000;
 
-
-// [[{filled: 1, div: div}][]]
 const gameScreen = [];
 const previewScreen = []
-let pause = false;
 
+//Entry Point
 main();
 
 function main() {
     window.onload = () => {
         initializeGameScreen();
         document.querySelector("#pause")
-            .addEventListener("click", pauseGame());
+            .addEventListener("click", pauseGame);
         document.querySelector("#restart")
-            .addEventListener("click", () => loseGame());
+            .addEventListener("click", loseGame);
     }
     document.onkeydown = handleArrowKeys;
 
@@ -49,13 +49,13 @@ function clearStagingScreen() {
 
 function setStagingScreen() {
     const startCoords = getStartCoordsForType(stagingType);
-    startCoords.forEach(row => row.forEach(block => previewScreen[block.y + 4][block.x -4].filled = stagingType));
+    startCoords.forEach(row => row.forEach(block => previewScreen[block.y + 4][block.x - 4].filled = stagingType));
 }
 
 function renderPreviewScreen() {
     previewScreen.forEach(row => {
         row.forEach(block => {
-            block.div.className = 'tetris-block filled-'+ block.filled
+            block.div.className = 'tetris-block filled-' + block.filled
         })
     })
 }
@@ -108,15 +108,13 @@ function handleArrowKeys(e) {
 
 
 function pauseGame() {
-    return () => {
-        pause = !pause;
-        const element = document.querySelector('#pause');
-        let text = 'pause';
-        if (pause) {
-            text = 'resume'
-        }
-        element.innerHTML = text;
+    pause = !pause;
+    const element = document.querySelector('#pause');
+    let text = 'pause';
+    if (pause) {
+        text = 'resume'
     }
+    element.innerHTML = text;
 }
 
 function getLevel() {
@@ -142,12 +140,12 @@ function scoreForCompleteRows() {
         const complete = row.every(el => el.filled > 0);
         if (complete) {
             scoreCount++;
-            const {rowDiv, blocks} = getNewRow(10);
+            const rowObject = getNewRow(10);
             const parent = row[0].div.parentNode;
             parent.parentNode.removeChild(row[0].div.parentElement);
             gameScreen.splice(index, 1);
-            gameScreen.splice(0, 0, blocks);
-            gameScreenDiv.insertBefore(rowDiv, gameScreenDiv.children[0]);
+            gameScreen.splice(0, 0, rowObject.blocks);
+            gameScreenDiv.insertBefore(rowObject.rowDiv, gameScreenDiv.children[0]);
         }
     });
 
@@ -175,7 +173,7 @@ function scoreForCompleteRows() {
 function renderScreen() {
     gameScreen.forEach(row => {
         row.forEach(block => {
-            block.div.className = 'tetris-block filled-'+ block.filled
+            block.div.className = 'tetris-block filled-' + block.filled
         })
     })
 }
@@ -274,7 +272,6 @@ function rotate() {
             const yNew = xOld + (maxY - minX);
             const xNew = minX + (maxY - yOld);
             if (minX >= 0 && yNew < gameScreen.length && xNew <= 9) {
-                // noinspection JSSuspiciousNameCombination
                 const blockElement = gameScreen[yNew][xNew];
                 if (!anyMatch(block => block.x === xNew && block.y === yNew)) {
                     canTurn = blockElement.filled !== 1
@@ -347,8 +344,6 @@ function resetGame() {
 }
 
 function loseGame() {
-    //Handle lose game logic
-    console.log('game is lost!');
     pause = true;
     gameScreen.slice().reverse().forEach((row, index) => {
 
