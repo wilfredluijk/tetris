@@ -2,7 +2,7 @@ body {
     background-color: #151a30;
     font-family: 'B612', sans-serif;
 }
-.score-view {
+.score-view{
     height: 200px;
     display: flex;
     justify-content: center;
@@ -10,12 +10,18 @@ body {
     flex-direction: row;
 }
 
-.score-box, .level-box {
+.score-box, .level-box, .preview-box {
     border: 2px solid #dfd9e8;
     padding: 10px;
-    margin-right: 2rem;
+    margin-right: 1rem;
+    margin-left: 1rem;
     color: #dfd9e8;
     border-radius: 25px;
+}
+
+.preview-box {
+    height: 300px;
+    align-content: center;
 }
 
 #pause, #restart {
@@ -34,16 +40,18 @@ body {
 
 }
 
+
 .tetris-view {
     display: flex;
     flex-direction: column;
     align-content: start;
-    width: 600px;
-    min-width: 600px;
+    width: 400px;
+    min-width: 400px;
     max-width: 600px;
 }
 
 .tetris-row {
+    justify-content: center;
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;

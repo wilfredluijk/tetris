@@ -5,12 +5,13 @@ let lines = 0;
 let level = 1;
 let activeBlock = {
     type: -1,
-    coords: [[{x: 0, y: 0}]], orientation: 1
+    coords: [[{x: 0, y: 0}]]
 };
 
 
 // [[{filled: 1, div: div}][]]
 const gameScreen = [];
+const previewScreen = []
 let pause = false;
 
 main();
@@ -29,12 +30,32 @@ function main() {
     setInterval(gameLoop, 1000)
 }
 
+function clearStagingScreen() {
+    previewScreen.forEach(row => row.forEach(block => block.filled = 0));
+}
+
+function setStagingScreen() {
+    const startCoords = getStartCoordsForType(stagingType);
+    startCoords.forEach(row => row.forEach(block => previewScreen[block.y + 4][block.x -4].filled = stagingType));
+}
+
+function renderPreviewScreen() {
+    previewScreen.forEach(row => {
+        row.forEach(block => {
+            block.div.className = 'tetris-block filled-'+ block.filled
+        })
+    })
+}
+
 function gameLoop() {
     if (!pause) {
         if (stagingType === 0) {
+            clearStagingScreen();
             stagingType = Math.floor(Math.random() * 7) + 1;
             // stagingType = 7;
             console.log(stagingType);
+            setStagingScreen();
+            renderPreviewScreen();
         }
 
         if (activeBlock.type === -1) {
@@ -45,6 +66,7 @@ function gameLoop() {
 
         moveDown();
         renderScreen();
+       
         gameTick++;
     }
 }
@@ -149,16 +171,23 @@ function renderScreen() {
 function initializeGameScreen() {
     const gameScreenDiv = document.querySelector('.tetris-view');
     Array.from(Array(20).keys()).forEach((val, index) => {
-        const {rowDiv, blocks} = getNewRow();
+        const {rowDiv, blocks} = getNewRow(10);
         gameScreenDiv.appendChild(rowDiv);
         gameScreen.push(blocks);
     });
+
+    const previewScreenDiv = document.querySelector('.preview-box');
+    Array.from(Array(4).keys()).forEach((val, index) => {
+        const {rowDiv, blocks} = getNewRow(4);
+        previewScreenDiv.appendChild(rowDiv);
+        previewScreen.push(blocks);
+    });
 }
 
-function getNewRow() {
+function getNewRow(length) {
     const rowDiv = createDivWithClass('tetris-row');
     const blocks = [];
-    Array.from(Array(10).keys()).forEach((block, index) => {
+    Array.from(Array(length).keys()).forEach((block, index) => {
         const blockDiv = createDivWithClass('tetris-block');
         rowDiv.appendChild(blockDiv);
         blocks.push({filled: 0, div: blockDiv});
@@ -267,7 +296,6 @@ function rotate() {
 function initiateNewGameBlock() {
     activeBlock.type = stagingType;
     activeBlock.coords = getStartCoordsForType(stagingType)
-    activeBlock.orientation = 1;
 }
 
 function resetActiveBlock() {
