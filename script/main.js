@@ -65,7 +65,6 @@ function gameLoop() {
         if (stagingType === 0) {
             clearStagingScreen();
             stagingType = Math.floor(Math.random() * 7) + 1;
-            // stagingType = 7;
             console.log(stagingType);
             setStagingScreen();
             renderPreviewScreen();
@@ -118,11 +117,11 @@ function pauseGame() {
 }
 
 function getLevel() {
-    let level = 1;
+    let gameLevel = 1;
     if (lines > 10) {
-        level = Math.round(lines / 10) + 1;
+        gameLevel = Math.round(lines / 10) + 1;
     }
-    return level;
+    return gameLevel;
 }
 
 function setScoreAndLevel() {
@@ -212,35 +211,11 @@ function createDivWithClass(className) {
 }
 
 function moveSideways(horizontalStep) {
-    let canMove = true;
-    for (let i = activeBlock.coords.length - 1; i >= 0; i--) {
-        const figureRow = activeBlock.coords[i];
-        for (let block of figureRow) {
-            const newX = block.x + horizontalStep;
-            if (newX > 9 || newX < 0) {
-                canMove = false;
-                break;
-            }
-            if (block.y >= 0) {
-                const row = gameScreen[block.y];
-                const blockElement = row[newX];
+    const coords = activeBlock.coords;
 
-                const isOwn = anyMatch(block => block.x === newX && block.y === block.y);
-
-                if (blockElement.filled > 0 && !isOwn) {
-                    canMove = false;
-                    break;
-                }
-            }
-        }
-
-    }
-
-    if (canMove && activeBlock.type !== -1) {
-        for (let i = activeBlock.coords.length - 1; i >= 0; i--) {
-            const slice = activeBlock.coords[i].slice();
-
-            slice.forEach(block => {
+    if (canMoveSideways(coords, horizontalStep) && activeBlockIsNotReset()) {
+        coords.forEach(row => {
+            row.forEach(block => {
                 if (block.y >= 0) {
                     if (blocksOnPos(block) <= 1) {
                         gameScreen[block.y][block.x].filled = 0;
@@ -251,8 +226,36 @@ function moveSideways(horizontalStep) {
                     block.x += horizontalStep;
                 }
             })
+        })
+    }
+}
+
+function canMoveSideways(coords, horizontalStep) {
+    let canMove = true;
+    rowLoop: for (let figureRow of coords) {
+        for (let block of figureRow) {
+            const newX = block.x + horizontalStep;
+            if (newX > 9 || newX < 0) {
+                canMove = false;
+                break rowLoop;
+            }
+            if (block.y >= 0) {
+                const gameScreenBlock = gameScreen[block.y][newX];
+                const isOwn = anyMatch(compareBlock => compareBlock.x === newX
+                    && compareBlock.y === block.y);
+
+                if (gameScreenBlock.filled > 0 && !isOwn) {
+                    canMove = false;
+                    break rowLoop;
+                }
+            }
         }
     }
+    return canMove;
+}
+
+function activeBlockIsNotReset() {
+    return activeBlock.type !== -1;
 }
 
 function anyMatch(booleanCallback) {
@@ -273,7 +276,7 @@ function rotate() {
             const xNew = minX + (maxY - yOld);
             if (minX >= 0 && yNew < gameScreen.length && xNew <= 9) {
                 const blockElement = gameScreen[yNew][xNew];
-                if (!anyMatch(block => block.x === xNew && block.y === yNew)) {
+                if (!anyMatch(gameBlock => gameBlock.x === xNew && gameBlock.y === yNew)) {
                     canTurn = blockElement.filled !== 1
                 }
             } else {
@@ -418,9 +421,9 @@ function moveDown() {
     }
 }
 
-function getStartCoordsForType(stagingType) {
+function getStartCoordsForType(stagingTypeId) {
     let returnValue = [];
-    switch (stagingType) {
+    switch (stagingTypeId) {
         case 1:
             // #
             // #
