@@ -50,39 +50,40 @@ body {
 }
 
 .filled-0 {
-    background: #384268;
+    /*background: #384268;*/
 }
 
 .filled-1 {
-    background: #48f957;
+    background: linear-gradient(#48f957 0%, #20b62c 60%, #043e09 100%);
 }
 
 .filled-2 {
-    background: #ff1203;
+    /*background: #ff1203;*/
+    background: linear-gradient(#f06060 0%, #a30505 60%, #4d0202 100%);
 }
 
 .filled-3 {
-    background: #fda703;
+    background: linear-gradient(#fda703 0%, #c17e02 60%, #3b2803 100%);
 }
 
 .filled-4 {
-    background: #ef7afa;
+    background: linear-gradient(#ef7afa 0%, #8d1199 60%, #3a073e 100%);
 }
 
 .filled-5 {
-    background: #fbfcfc;
+    background: linear-gradient(#fbfcfc 0%, #919393 60%, #393838 100%);
 }
 
 .filled-6 {
-    background: #04bcff;
+    background: linear-gradient(#04bcff 0%, #037099 60%, #013b50 100%);
 }
 
 .filled-7 {
-    background: #ff006e;
+    background: linear-gradient(#ff006e 0%, #950242 60%, #530124 100%);
 }
 
 .filled-8 {
-    background: #f86b0a;
+    background: linear-gradient(#f86b0a 0%, #933d01 60%, #572401 100%);
 }
 
 .tetris-block {

@@ -175,33 +175,31 @@ function createDivWithClass(className) {
 function moveSideways(horizontalStep) {
     let canMove = true;
     for (let i = activeBlock.coords.length - 1; i >= 0; i--) {
-        const row = activeBlock.coords[i];
-        let block = horizontalStep === 1 ? row[row.length - 1] : row[0];
-        const newX = block.x + horizontalStep;
-        if (newX > 9 || newX < 0) {
-            canMove = false;
-            break;
-        }
-        if (block.y >= 0) {
-            const row = gameScreen[block.y];
-            const blockElement = row[newX];
-
-            const isOwn = blockIsCompared(block => block.x === newX && block.y === block.y);
-
-            if (blockElement.filled > 0 && !isOwn) {
+        const figureRow = activeBlock.coords[i];
+        for (let block of figureRow) {
+            const newX = block.x + horizontalStep;
+            if (newX > 9 || newX < 0) {
                 canMove = false;
                 break;
             }
+            if (block.y >= 0) {
+                const row = gameScreen[block.y];
+                const blockElement = row[newX];
+
+                const isOwn = anyMatch(block => block.x === newX && block.y === block.y);
+
+                if (blockElement.filled > 0 && !isOwn) {
+                    canMove = false;
+                    break;
+                }
+            }
         }
+
     }
 
     if (canMove && activeBlock.type !== -1) {
         for (let i = activeBlock.coords.length - 1; i >= 0; i--) {
             const slice = activeBlock.coords[i].slice();
-
-            if (horizontalStep > 0) {
-                slice.reverse();
-            }
 
             slice.forEach(block => {
                 if (block.y >= 0) {
@@ -218,13 +216,12 @@ function moveSideways(horizontalStep) {
     }
 }
 
-function blockIsCompared(booleanCallback) {
+function anyMatch(booleanCallback) {
     return activeBlock.coords.some(row => row.some(block => booleanCallback(block)));
 }
 
 function rotate() {
     const maxY = Math.max(...activeBlock.coords.flatMap(row => row.map(block => block.y)));
-    const minY = Math.min(...activeBlock.coords.flatMap(row => row.map(block => block.y)));
     const minX = Math.min(...activeBlock.coords.flatMap(row => row.map(block => block.x)));
     let canTurn = true;
 
@@ -238,14 +235,13 @@ function rotate() {
             if (minX >= 0 && yNew < gameScreen.length && xNew <= 9) {
                 // noinspection JSSuspiciousNameCombination
                 const blockElement = gameScreen[yNew][xNew];
-                if (!blockIsCompared(block => block.x === xNew && block.y === yNew)) {
+                if (!anyMatch(block => block.x === xNew && block.y === yNew)) {
                     canTurn = blockElement.filled !== 1
                 }
             } else {
                 canTurn = false;
             }
         }
-
     }))
 
     if (canTurn) {
@@ -338,7 +334,7 @@ function moveDown() {
                 invalidMove = newY >= gameScreen.length;
 
                 if (!invalidMove) {
-                    const isSelf = blockIsCompared(block => block.x === position.x
+                    const isSelf = anyMatch(block => block.x === position.x
                         && block.y === newY);
                     if (i === figureRowCount) {
                         if (!isSelf) {
