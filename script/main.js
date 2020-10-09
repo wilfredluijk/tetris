@@ -1,4 +1,3 @@
-let gameTick = 0;
 let stagingType = 0;
 let score = 0;
 let lines = 0;
@@ -7,6 +6,7 @@ let activeBlock = {
     type: -1,
     coords: [[{x: 0, y: 0}]]
 };
+let timeout = 1000;
 
 
 // [[{filled: 1, div: div}][]]
@@ -26,8 +26,21 @@ function main() {
     }
     document.onkeydown = handleArrowKeys;
 
+    runGameTimer();
+}
 
-    setInterval(gameLoop, 1000)
+function runGameTimer() {
+    setTimeout(() => {
+        console.log('gameloop', timeout);
+        gameLoop();
+        runGameTimer()
+    }, timeout);
+
+    let speed = 1000;
+    for (let i = 1; i <= level; i++) {
+        speed *= 0.9;
+    }
+    timeout = timeout > speed ? speed : timeout;
 }
 
 function clearStagingScreen() {
@@ -66,8 +79,7 @@ function gameLoop() {
 
         moveDown();
         renderScreen();
-       
-        gameTick++;
+
     }
 }
 
@@ -110,7 +122,7 @@ function pauseGame() {
 function getLevel() {
     let level = 1;
     if (lines > 10) {
-        level = Math.round(lines / 10);
+        level = Math.round(lines / 10) + 1;
     }
     return level;
 }
@@ -130,7 +142,7 @@ function scoreForCompleteRows() {
         const complete = row.every(el => el.filled > 0);
         if (complete) {
             scoreCount++;
-            const {rowDiv, blocks} = getNewRow();
+            const {rowDiv, blocks} = getNewRow(10);
             const parent = row[0].div.parentNode;
             parent.parentNode.removeChild(row[0].div.parentElement);
             gameScreen.splice(index, 1);
@@ -316,6 +328,7 @@ function restartGame() {
     score = 0;
     level = 1;
     lines = 0;
+    timeout = 1000;
     setScoreAndLevel();
     pause = false;
 }
