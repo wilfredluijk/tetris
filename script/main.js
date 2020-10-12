@@ -262,36 +262,23 @@ function anyMatch(booleanCallback) {
     return activeBlock.coords.some(row => row.some(block => booleanCallback(block)));
 }
 
+function getRotateCoords(block, maxY, minX) {
+    const xOld = block.x;
+    const yOld = block.y;
+    const yNew = xOld + (maxY - minX);
+    const xNew = minX + (maxY - yOld);
+    return {yNew, xNew};
+}
+
 function rotate() {
     const maxY = Math.max(...activeBlock.coords.flatMap(row => row.map(block => block.y)));
     const minX = Math.min(...activeBlock.coords.flatMap(row => row.map(block => block.x)));
-    let canTurn = true;
-
-
-    activeBlock.coords.forEach(row => row.forEach(block => {
-        if (canTurn) {
-            const xOld = block.x;
-            const yOld = block.y;
-            const yNew = xOld + (maxY - minX);
-            const xNew = minX + (maxY - yOld);
-            if (minX >= 0 && yNew < gameScreen.length && xNew <= 9) {
-                const blockElement = gameScreen[yNew][xNew];
-                if (!anyMatch(gameBlock => gameBlock.x === xNew && gameBlock.y === yNew)) {
-                    canTurn = blockElement.filled !== 1
-                }
-            } else {
-                canTurn = false;
-            }
-        }
-    }))
-
-    if (canTurn) {
+    if (canRotate(maxY, minX)) {
         activeBlock.coords.forEach(row => row.forEach(block => {
             const xOld = block.x;
             const yOld = block.y;
 
-            const yNew = xOld + (maxY - minX);
-            const xNew = minX + (maxY - yOld);
+            const {yNew, xNew} = getRotateCoords(block, maxY, minX);
 
             if (yOld >= 0 && blocksOnPos(block) <= 1) {
                 gameScreen[yOld][xOld].filled = 0;
@@ -303,6 +290,24 @@ function rotate() {
             block.y = yNew;
         }));
     }
+}
+
+function canRotate(maxY, minX) {
+    let canTurn = true;
+    activeBlock.coords.forEach(row => row.forEach(block => {
+        if (canTurn) {
+            const {yNew, xNew} = getRotateCoords(block, maxY, minX);
+            if (minX >= 0 && yNew < gameScreen.length && xNew <= 9) {
+                const blockElement = gameScreen[yNew][xNew];
+                if (!anyMatch(gameBlock => gameBlock.x === xNew && gameBlock.y === yNew)) {
+                    canTurn = blockElement.filled !== 1
+                }
+            } else {
+                canTurn = false;
+            }
+        }
+    }))
+    return canTurn;
 }
 
 function initiateNewGameBlock() {
