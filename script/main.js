@@ -9,6 +9,8 @@ let activeBlock = {
 };
 let pause = false;
 let timeout = 1000;
+let gameTimerHandle = null;
+let isAnimating = false;
 
 const gameScreen = [];
 const previewScreen = []
@@ -17,30 +19,32 @@ const previewScreen = []
 main();
 
 function main() {
-    window.onload = () => {
+    const start = () => {
         initializeGameScreen();
         document.querySelector("#pause")
             .addEventListener("click", pauseGame);
         document.querySelector("#restart")
-            .addEventListener("click", loseGame);
+            .addEventListener("click", userRestart);
+        document.addEventListener("keydown", handleArrowKeys);
+        runGameTimer();
+    };
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", start);
+    } else {
+        start();
     }
-    document.onkeydown = handleArrowKeys;
-
-    runGameTimer();
 }
 
 function runGameTimer() {
-    setTimeout(() => {
-        console.log('gameloop', timeout);
-        gameLoop();
-        runGameTimer()
-    }, timeout);
-
     let speed = 1000;
     for (let i = 1; i <= level; i++) {
         speed *= 0.9;
     }
     timeout = timeout > speed ? speed : timeout;
+    gameTimerHandle = setTimeout(() => {
+        gameLoop();
+        runGameTimer();
+    }, timeout);
 }
 
 function clearStagingScreen() {
@@ -65,7 +69,6 @@ function gameLoop() {
         if (stagingType === 0) {
             clearStagingScreen();
             stagingType = Math.floor(Math.random() * 7) + 1;
-            console.log(stagingType);
             setStagingScreen();
             renderPreviewScreen();
         }
@@ -83,25 +86,30 @@ function gameLoop() {
 }
 
 function handleArrowKeys(e) {
-    if (!pause) {
-        switch (e.key) {
-            case "ArrowLeft":
-                moveSideways(-1);
-                renderScreen();
-                break;
-            case "ArrowRight":
-                moveSideways(1);
-                renderScreen();
-                break;
-            case "ArrowUp":
-                rotate();
-                renderScreen();
-                break;
-            case "ArrowDown":
-                moveDown();
-                renderScreen();
-                break;
-        }
+    if (pause) {
+        return;
+    }
+    switch (e.key) {
+        case "ArrowLeft":
+            e.preventDefault();
+            moveSideways(-1);
+            renderScreen();
+            break;
+        case "ArrowRight":
+            e.preventDefault();
+            moveSideways(1);
+            renderScreen();
+            break;
+        case "ArrowUp":
+            e.preventDefault();
+            rotate();
+            renderScreen();
+            break;
+        case "ArrowDown":
+            e.preventDefault();
+            moveDown();
+            renderScreen();
+            break;
     }
 }
 
@@ -135,18 +143,21 @@ function scoreForCompleteRows() {
     const gameScreenDiv = document.querySelector('.tetris-view');
 
     let scoreCount = 0;
-    gameScreen.forEach((row, index) => {
-        const complete = row.every(el => el.filled > 0);
-        if (complete) {
+    for (let i = gameScreen.length - 1; i >= 0;) {
+        const row = gameScreen[i];
+        if (row.every(el => el.filled > 0)) {
             scoreCount++;
+            const rowDivToRemove = row[0].div.parentElement;
+            rowDivToRemove.parentNode.removeChild(rowDivToRemove);
+            gameScreen.splice(i, 1);
             const rowObject = getNewRow(10);
-            const parent = row[0].div.parentNode;
-            parent.parentNode.removeChild(row[0].div.parentElement);
-            gameScreen.splice(index, 1);
-            gameScreen.splice(0, 0, rowObject.blocks);
+            gameScreen.unshift(rowObject.blocks);
             gameScreenDiv.insertBefore(rowObject.rowDiv, gameScreenDiv.children[0]);
+            // Don't decrement i: the row that was above has shifted down to index i.
+        } else {
+            i--;
         }
-    });
+    }
 
     if (scoreCount > 0) {
         level = getLevel()
@@ -300,7 +311,7 @@ function canRotate(maxY, minX) {
             if (minX >= 0 && yNew < gameScreen.length && xNew <= 9) {
                 const blockElement = gameScreen[yNew][xNew];
                 if (!anyMatch(gameBlock => gameBlock.x === xNew && gameBlock.y === yNew)) {
-                    canTurn = blockElement.filled !== 1
+                    canTurn = blockElement.filled === 0;
                 }
             } else {
                 canTurn = false;
@@ -321,9 +332,10 @@ function resetActiveBlock() {
 
 function blocksOnPos(position) {
     let count = 0;
-    activeBlock.coords.some(row => row.some(block => {
-        if (block.x === position.x && block.y === position.y)
+    activeBlock.coords.forEach(row => row.forEach(block => {
+        if (block.x === position.x && block.y === position.y) {
             count++;
+        }
     }));
     return count;
 }
@@ -334,36 +346,51 @@ function restartGame() {
     level = 1;
     lines = 0;
     timeout = 1000;
+    stagingType = 0;
+    clearStagingScreen();
+    renderPreviewScreen();
     setScoreAndLevel();
     pause = false;
 }
 
 function resetGame() {
+    isAnimating = true;
     gameScreen.slice().forEach((row, index) => {
-
         setTimeout(() => {
-            if (index === gameScreen.length - 1) {
-                restartGame();
-            }
             row.forEach(block => block.filled = 0);
             renderScreen();
+            if (index === gameScreen.length - 1) {
+                restartGame();
+                isAnimating = false;
+            }
         }, index * 100);
-    })
+    });
 }
 
 function loseGame() {
+    if (isAnimating) {
+        return;
+    }
+    isAnimating = true;
     pause = true;
     gameScreen.slice().reverse().forEach((row, index) => {
-
         setTimeout(() => {
             row.forEach(block => block.filled = 8);
             renderScreen();
             if (index === gameScreen.length - 1) {
+                isAnimating = false;
                 resetGame();
             }
         }, index * 100);
-        console.log()
-    })
+    });
+}
+
+function userRestart() {
+    if (isAnimating) {
+        return;
+    }
+    pause = true;
+    resetGame();
 }
 
 function moveDown() {
