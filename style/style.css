@@ -1,103 +1,454 @@
-body {
-    background-color: #151a30;
-    font-family: 'B612', sans-serif;
+:root {
+    --bg-deep: #04020e;
+    --bg-mid: #1a0b3a;
+    --bg-glow: #2a0e5e;
+    --neon-pink: #ff2ec1;
+    --neon-cyan: #00f0ff;
+    --neon-purple: #b66dff;
+    --neon-yellow: #ffd60a;
+    --neon-green: #6dffaa;
+    --text: #e8e6ff;
+    --grid-line: rgba(180, 160, 255, 0.06);
 }
-.score-view{
-    height: 200px;
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: 'B612', sans-serif;
+    color: var(--text);
+    overflow-x: hidden;
+}
+
+body {
+    background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, var(--bg-glow) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 50% 110%, #4a0a7a 0%, transparent 55%),
+        linear-gradient(180deg, var(--bg-mid) 0%, var(--bg-deep) 100%);
+    background-attachment: fixed;
+    position: relative;
+    animation: bgShift 14s ease-in-out infinite alternate;
+}
+
+@keyframes bgShift {
+    0%   { background-position: 0% 0%, 0% 0%, 0 0; filter: hue-rotate(0deg); }
+    100% { background-position: 0% 0%, 0% 0%, 0 0; filter: hue-rotate(15deg); }
+}
+
+/* Synthwave horizon grid */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* CRT scanlines + vignette */
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+        repeating-linear-gradient(
+            to bottom,
+            transparent 0,
+            transparent 2px,
+            rgba(0, 0, 0, 0.18) 3px,
+            transparent 4px
+        ),
+        radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.65) 100%);
+    pointer-events: none;
+    z-index: 999;
+    mix-blend-mode: multiply;
+}
+
+/* ----- Action bar ----- */
+.action-bar {
     display: flex;
+    flex-direction: row;
     justify-content: center;
     align-items: center;
-    flex-direction: row;
-}
-
-.score-box, .level-box, .preview-box {
-    border: 2px solid #dfd9e8;
-    padding: 10px;
-    margin-right: 1rem;
-    margin-left: 1rem;
-    color: #dfd9e8;
-    border-radius: 25px;
-}
-
-.preview-box {
-    height: 300px;
-    align-content: center;
+    gap: 1rem;
+    padding: 1.5rem 1rem 0.5rem;
+    position: relative;
+    z-index: 2;
 }
 
 #pause, #restart {
-    margin: 1rem;
-    font-size: 30px;
-    background-color: #384268;
-    color: #dfd9e8;
-    padding: 20px;
-    border-radius: 25px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 14px 22px;
+    border-radius: 10px;
+    color: var(--neon-cyan);
+    background: linear-gradient(180deg, rgba(29, 23, 64, 0.85), rgba(12, 7, 38, 0.85));
+    border: 2px solid var(--neon-cyan);
+    box-shadow:
+        0 0 10px rgba(0, 240, 255, 0.45),
+        inset 0 0 12px rgba(0, 240, 255, 0.18);
+    text-shadow: 0 0 6px rgba(0, 240, 255, 0.85);
+    transition: transform 140ms ease, box-shadow 220ms ease, color 200ms ease;
 }
 
-.game-view, .action-bar {
+#pause:hover, #restart:hover {
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+#pause:hover {
+    box-shadow:
+        0 0 22px rgba(0, 240, 255, 0.85),
+        0 8px 22px rgba(0, 240, 255, 0.25),
+        inset 0 0 16px rgba(0, 240, 255, 0.35);
+}
+
+#pause:active, #restart:active {
+    transform: translateY(0);
+    filter: brightness(1.2);
+}
+
+#restart {
+    color: var(--neon-pink);
+    border-color: var(--neon-pink);
+    box-shadow:
+        0 0 10px rgba(255, 46, 193, 0.45),
+        inset 0 0 12px rgba(255, 46, 193, 0.18);
+    text-shadow: 0 0 6px rgba(255, 46, 193, 0.85);
+}
+
+#restart:hover {
+    box-shadow:
+        0 0 22px rgba(255, 46, 193, 0.85),
+        0 8px 22px rgba(255, 46, 193, 0.25),
+        inset 0 0 16px rgba(255, 46, 193, 0.35);
+}
+
+/* ----- Layout ----- */
+.game-view {
     display: flex;
     flex-direction: row;
     justify-content: center;
-
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.5rem 1rem 2rem;
+    position: relative;
+    z-index: 2;
 }
 
+.score-view {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+    min-width: 180px;
+}
 
+/* ----- Side panels ----- */
+.score-box, .level-box, .preview-box {
+    border: 2px solid var(--neon-purple);
+    padding: 16px 20px 18px;
+    color: var(--text);
+    border-radius: 14px;
+    background:
+        linear-gradient(180deg, rgba(60, 30, 120, 0.35), rgba(20, 10, 50, 0.65));
+    box-shadow:
+        0 0 18px rgba(182, 109, 255, 0.4),
+        inset 0 0 22px rgba(182, 109, 255, 0.12);
+    text-align: center;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.score-box h1, .level-box h1, .preview-box h1 {
+    margin: 0 0 6px 0;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--neon-cyan);
+    text-shadow:
+        0 0 6px rgba(0, 240, 255, 0.85),
+        0 0 14px rgba(0, 240, 255, 0.45);
+}
+
+.score-box h2, .level-box h2 {
+    margin: 0;
+    font-family: 'VT323', monospace;
+    font-size: 56px;
+    line-height: 1;
+    color: var(--neon-yellow);
+    text-shadow:
+        0 0 10px rgba(255, 214, 10, 0.95),
+        0 0 26px rgba(255, 214, 10, 0.55);
+    min-height: 56px;
+    transition: transform 180ms ease;
+}
+
+/* ----- Preview pane ----- */
+.preview-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: auto;
+    min-width: 180px;
+    border-color: var(--neon-pink);
+    box-shadow:
+        0 0 18px rgba(255, 46, 193, 0.45),
+        inset 0 0 22px rgba(255, 46, 193, 0.14);
+    animation: previewPulse 2.6s ease-in-out infinite;
+}
+
+.preview-box h1 {
+    color: var(--neon-pink);
+    text-shadow:
+        0 0 6px rgba(255, 46, 193, 0.95),
+        0 0 14px rgba(255, 46, 193, 0.5);
+    margin-bottom: 12px;
+}
+
+@keyframes previewPulse {
+    0%, 100% {
+        box-shadow:
+            0 0 18px rgba(255, 46, 193, 0.4),
+            inset 0 0 22px rgba(255, 46, 193, 0.12);
+    }
+    50% {
+        box-shadow:
+            0 0 32px rgba(255, 46, 193, 0.85),
+            0 0 60px rgba(255, 46, 193, 0.25),
+            inset 0 0 30px rgba(255, 46, 193, 0.22);
+    }
+}
+
+/* ----- Playfield ----- */
 .tetris-view {
     display: flex;
     flex-direction: column;
-    align-content: start;
-    width: 400px;
-    min-width: 400px;
-    max-width: 600px;
+    width: 392px;
+    min-width: 392px;
+    max-width: 392px;
+    padding: 6px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(8, 4, 24, 0.92), rgba(20, 10, 50, 0.92));
+    border: 2px solid var(--neon-cyan);
+    box-shadow:
+        0 0 26px rgba(0, 240, 255, 0.5),
+        0 0 70px rgba(0, 240, 255, 0.18),
+        inset 0 0 50px rgba(0, 240, 255, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.tetris-view::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border-radius: 8px;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 38px 38px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Soft sweeping highlight across the playfield */
+.tetris-view::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(115deg,
+        transparent 30%,
+        rgba(0, 240, 255, 0.06) 50%,
+        transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+    animation: sweep 6s linear infinite;
+}
+
+@keyframes sweep {
+    0%   { transform: translateX(-30%); }
+    100% { transform: translateX(30%); }
 }
 
 .tetris-row {
-    justify-content: center;
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
-}
-
-.filled-0 {
-    /*background: #384268;*/
-}
-
-.filled-1 {
-    background: linear-gradient(#48f957 0%, #20b62c 60%, #043e09 100%);
-}
-
-.filled-2 {
-    /*background: #ff1203;*/
-    background: linear-gradient(#f06060 0%, #a30505 60%, #4d0202 100%);
-}
-
-.filled-3 {
-    background: linear-gradient(#fda703 0%, #c17e02 60%, #3b2803 100%);
-}
-
-.filled-4 {
-    background: linear-gradient(#ef7afa 0%, #8d1199 60%, #3a073e 100%);
-}
-
-.filled-5 {
-    background: linear-gradient(#fbfcfc 0%, #919393 60%, #393838 100%);
-}
-
-.filled-6 {
-    background: linear-gradient(#04bcff 0%, #037099 60%, #013b50 100%);
-}
-
-.filled-7 {
-    background: linear-gradient(#ff006e 0%, #950242 60%, #530124 100%);
-}
-
-.filled-8 {
-    background: linear-gradient(#f86b0a 0%, #933d01 60%, #572401 100%);
-}
-
-.tetris-block {
-    height: 35px;
-    width: 35px;
-    border: solid 2px #dfd9e8;
+    justify-content: center;
+    position: relative;
     z-index: 1;
 }
 
+.tetris-block {
+    height: 36px;
+    width: 36px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 3px;
+    z-index: 1;
+    position: relative;
+    transition: background 90ms ease-out, box-shadow 220ms ease, opacity 140ms ease;
+}
+
+/* Empty cell — subtle grid dot, with a brief phosphor decay trail */
+.filled-0 {
+    background:
+        radial-gradient(circle at center, rgba(255, 255, 255, 0.05) 0%, transparent 55%);
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: none;
+    animation: phosphorDecay 280ms ease-out;
+}
+
+@keyframes phosphorDecay {
+    0% {
+        background: radial-gradient(circle at center, rgba(255, 255, 255, 0.55) 0%, rgba(170, 220, 255, 0.2) 60%, transparent 100%);
+        box-shadow: 0 0 14px rgba(180, 220, 255, 0.55);
+    }
+    100% {
+        background:
+            radial-gradient(circle at center, rgba(255, 255, 255, 0.05) 0%, transparent 55%);
+        box-shadow: none;
+    }
+}
+
+/* Filled blocks — bevel + neon glow (uses currentColor for the outer glow) */
+.tetris-block[class*="filled-"]:not(.filled-0):not(.filled-8) {
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 5px;
+    box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.45),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.45),
+        inset 2px 0 0 rgba(255, 255, 255, 0.18),
+        inset -2px 0 0 rgba(0, 0, 0, 0.28),
+        0 0 10px currentColor,
+        0 0 18px currentColor;
+    animation: blockPop 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes blockPop {
+    0%   { transform: scale(0.78); filter: brightness(1.6); }
+    60%  { transform: scale(1.06); filter: brightness(1.2); }
+    100% { transform: scale(1); filter: brightness(1); }
+}
+
+.filled-1 {
+    background: linear-gradient(160deg, #8effb0 0%, #20b62c 60%, #043e09 100%);
+    color: rgba(72, 249, 87, 0.55);
+}
+.filled-2 {
+    background: linear-gradient(160deg, #ff8a8a 0%, #d11b1b 60%, #4d0202 100%);
+    color: rgba(255, 50, 50, 0.55);
+}
+.filled-3 {
+    background: linear-gradient(160deg, #ffc14a 0%, #c17e02 60%, #3b2803 100%);
+    color: rgba(253, 167, 3, 0.55);
+}
+.filled-4 {
+    background: linear-gradient(160deg, #f9aaff 0%, #8d1199 60%, #3a073e 100%);
+    color: rgba(239, 122, 250, 0.6);
+}
+.filled-5 {
+    background: linear-gradient(160deg, #ffffff 0%, #b8b8b8 60%, #393838 100%);
+    color: rgba(255, 255, 255, 0.5);
+}
+.filled-6 {
+    background: linear-gradient(160deg, #66e0ff 0%, #037099 60%, #013b50 100%);
+    color: rgba(4, 188, 255, 0.6);
+}
+.filled-7 {
+    background: linear-gradient(160deg, #ff6aaa 0%, #950242 60%, #530124 100%);
+    color: rgba(255, 0, 110, 0.6);
+}
+
+/* Lose state — pulsing molten orange */
+.filled-8 {
+    background: linear-gradient(160deg, #ffb060 0%, #933d01 60%, #572401 100%);
+    color: rgba(248, 107, 10, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 5px;
+    box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.45),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.45),
+        0 0 12px currentColor,
+        0 0 22px currentColor;
+    animation: loseFlash 700ms cubic-bezier(0.34, 1.56, 0.64, 1) both,
+               loseGlow 1.4s ease-in-out infinite alternate 700ms;
+}
+
+@keyframes loseFlash {
+    0%   { transform: scale(0.4); opacity: 0; }
+    60%  { transform: scale(1.12); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes loseGlow {
+    from { filter: brightness(1) saturate(1); }
+    to   { filter: brightness(1.25) saturate(1.4); }
+}
+
+/* ----- Responsive ----- */
+@media (max-width: 820px) {
+    .game-view {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding-bottom: 3rem;
+    }
+
+    .score-view {
+        flex-direction: row;
+        min-width: 0;
+        justify-content: center;
+    }
+
+    .preview-box {
+        order: -1;
+    }
+}
+
+@media (max-width: 460px) {
+    .tetris-block {
+        height: 28px;
+        width: 28px;
+    }
+
+    .tetris-view {
+        width: 304px;
+        min-width: 304px;
+    }
+
+    .tetris-view::before {
+        background-size: 30px 30px;
+    }
+
+    .score-box h2, .level-box h2 {
+        font-size: 42px;
+        min-height: 42px;
+    }
+
+    #pause, #restart {
+        font-size: 11px;
+        padding: 12px 16px;
+    }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    body, .preview-box, .filled-8, .tetris-view::after {
+        animation: none !important;
+    }
+    * {
+        transition-duration: 0ms !important;
+    }
+}
