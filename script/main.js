@@ -110,7 +110,29 @@ function handleArrowKeys(e) {
             moveDown();
             renderScreen();
             break;
+        case " ":
+            e.preventDefault();
+            hardDrop();
+            break;
     }
+}
+
+function hardDrop() {
+    if (activeBlock.type === -1) {
+        return;
+    }
+    let dropDistance = 0;
+    while (activeBlock.type !== -1) {
+        moveDown();
+        if (activeBlock.type !== -1) {
+            dropDistance++;
+        }
+    }
+    if (dropDistance > 0) {
+        score += dropDistance * 2;
+        setScoreAndLevel();
+    }
+    renderScreen();
 }
 
 

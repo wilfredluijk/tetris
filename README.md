@@ -8,4 +8,5 @@ Play the [demo](https://wilfredluijk.github.io/tetris/)
 Play using the arrowkeys.   
 <kbd>Up</kbd> Rotate the active block.  
 <kbd>Down</kbd> Move the active block down one row.  
-<kbd>Left</kbd> or <kbd>Right</kbd> Move the active block sideways.   
+<kbd>Left</kbd> or <kbd>Right</kbd> Move the active block sideways.  
+<kbd>Space</kbd> Hard drop the active block straight to the bottom.   
